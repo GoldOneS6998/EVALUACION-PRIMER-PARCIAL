@@ -5,94 +5,82 @@ import { mensajes } from "../libs/manejoErrores.js";
 
 const router = Router();
 
-// Registro de usuarios
+// Crear nuevo usuario
 router.post("/registro", async (req, res) => {
-    const respuesta = await register(req.body);
-    res.cookie('token', respuesta.token).status(respuesta.status).json(respuesta);
+    try {
+        const resultado = await register(req.body);
+        res.cookie('token', resultado.token).status(resultado.status).json(resultado);
+    } catch (error) {
+        res.status(500).json(mensajes(500, "Error en el registro", error));
+    }
 });
 
-// Inicio de sesión
+// Autenticación de usuario
 router.post("/login", async (req, res) => {
-    const respuesta = await login(req.body);
-    res.status(respuesta.status).json(respuesta);
+    try {
+        const resultado = await login(req.body);
+        res.status(resultado.status).json(resultado);
+    } catch (error) {
+        res.status(500).json(mensajes(500, "Error en el inicio de sesión", error));
+    }
 });
 
-// Ruta para salir
-router.get("/salir", async (req, res) => {
-    res.send("Estas en Salir");
+// Cierre de sesión
+router.get("/salir", (req, res) => {
+    res.send("Sesión cerrada");
 });
 
-// Ruta para mostrar todos los usuarios
+// Obtener todos los usuarios
 router.get("/usuarios", async (req, res) => {
     try {
-        const usuarios = await User.find();
-        res.status(200).json(usuarios);
+        const listaUsuarios = await User.find();
+        res.status(200).json(listaUsuarios);
     } catch (error) {
-        res.status(500).json(mensajes(500, "Error al obtener los usuarios", error));
+        res.status(500).json(mensajes(500, "No se pudieron recuperar los usuarios", error));
     }
 });
 
-// Ruta para buscar un usuario por ID
+// Buscar usuario por ID
 router.get("/usuarios/:id", async (req, res) => {
     try {
-        const { id } = req.params;
-        const usuario = await User.findById(id);
-
-        if (!usuario) {
-            return res.status(404).json(mensajes(404, "Usuario no encontrado"));
-        }
-
+        const usuario = await User.findById(req.params.id);
+        if (!usuario) return res.status(404).json(mensajes(404, "Usuario no encontrado"));
         res.status(200).json(usuario);
     } catch (error) {
-        res.status(500).json(mensajes(500, "Error al buscar el usuario", error));
+        res.status(500).json(mensajes(500, "Error al buscar usuario", error));
     }
 });
 
-// Ruta para borrar un usuario por ID
+// Eliminar usuario por ID
 router.delete("/usuarios/:id", async (req, res) => {
     try {
-        const { id } = req.params;
-        const usuario = await User.findByIdAndDelete(id);
-
-        if (!usuario) {
-            return res.status(404).json(mensajes(404, "Usuario no encontrado"));
-        }
-
-        res.status(200).json(mensajes(200, "Usuario borrado correctamente"));
+        const usuarioEliminado = await User.findByIdAndDelete(req.params.id);
+        if (!usuarioEliminado) return res.status(404).json(mensajes(404, "Usuario no encontrado"));
+        res.status(200).json(mensajes(200, "Usuario eliminado con éxito"));
     } catch (error) {
-        res.status(500).json(mensajes(500, "Error al borrar el usuario", error));
+        res.status(500).json(mensajes(500, "Error al eliminar usuario", error));
     }
 });
 
-// Ruta para actualizar un usuario por ID
+// Modificar usuario por ID
 router.put("/usuarios/:id", async (req, res) => {
     try {
-        const { id } = req.params;
-        const datosActualizados = req.body;
-
-        const usuario = await User.findByIdAndUpdate(id, datosActualizados, {
-            new: true,
-            runValidators: true
-        });
-
-        if (!usuario) {
-            return res.status(404).json(mensajes(404, "Usuario no encontrado"));
-        }
-
-        res.status(200).json(mensajes(200, "Usuario actualizado correctamente", usuario));
+        const usuarioActualizado = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        if (!usuarioActualizado) return res.status(404).json(mensajes(404, "Usuario no encontrado"));
+        res.status(200).json(mensajes(200, "Usuario actualizado correctamente", usuarioActualizado));
     } catch (error) {
-        res.status(500).json(mensajes(500, "Error al actualizar el usuario", error));
+        res.status(500).json(mensajes(500, "Error al actualizar usuario", error));
     }
 });
 
-// Ruta para mostrar administradores (pendiente de implementación específica)
-router.get("/administradores", async (req, res) => {
-    res.send("Estas en Administradores");
+// Administradores (pendiente de implementación)
+router.get("/administradores", (req, res) => {
+    res.send("Sección de administradores");
 });
 
-// Ruta para mostrar usuarios casuales (pendiente de implementación específica)
-router.get("/casuales", async (req, res) => {
-    res.send("Estas en Casuales");
+// Usuarios casuales (pendiente de implementación)
+router.get("/casuales", (req, res) => {
+    res.send("Sección de usuarios casuales");
 });
 
 export default router;
